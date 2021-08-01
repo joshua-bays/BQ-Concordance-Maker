@@ -85,35 +85,36 @@ int find_wordDeque_index(std::deque<struct wordFreq> wordDeque, std::string word
 }
 
 std::deque<std::string> find_context_for_word(std::string word, std::string sourceFile){
-	std::deque<std::string> ret; std::deque<std::string> refs = find_references_for_word(word, sourceFile); int refsIndex = 0;
-	std::string verseText; int wordIndex, startContext, endContext, contextFactor; contextFactor = 60;
-	std::deque<int> wordIndicies;
-	std::ifstream readFile; readFile.open(sourceFile); std::string line = "|";
-	while(getline(readFile, line)){
-		if(refs[refsIndex] == line.substr(0, line.find("|"))){
-			verseText = " " + line.substr(line.find("|") + 1, line.size() - 1);
-			wordIndicies = find_substring_positions(make_lowercase_string(verseText), word, {';', ':', '\'', '-', '.', ',', ' '});
-			for(int i = 0; i < wordIndicies.size(); i++){
-				verseText.insert(wordIndicies[i] + i + i, "*");
-				verseText.insert(wordIndicies[i] + word.size() + i + i + 1, "*");
-				wordIndex = wordIndicies[i] + i;
-				if(wordIndex <= contextFactor){
-					startContext = 0;
-				}else{
-					startContext = wordIndex - contextFactor + verseText.substr(wordIndex - contextFactor, wordIndex).find(" ") + 1;
-				}
-				endContext = wordIndex + word.size() + contextFactor;
-				if(endContext >= verseText.size()){
-					endContext = verseText.size() - 1;
-				}else{
-					endContext = wordIndex + contextFactor + verseText.substr(wordIndex, wordIndex + contextFactor).rfind(" ") + 1;
-				}
-				ret.push_back(refs[refsIndex] + ":" + verseText.substr(startContext, endContext));
-			}
-		refsIndex++;
-		}
-	}
-	return ret;
+    std::deque<std::string> ret; std::deque<std::string> refs = find_references_for_word(word, sourceFile); int refsIndex = 0;
+    std::string verseText; int wordIndex, startContext, endContext, contextFactor; contextFactor = 60;
+    std::deque<int> wordIndicies;
+    std::ifstream readFile; readFile.open(sourceFile); std::string line = "|";
+    while(getline(readFile, line)){
+        if(refs[refsIndex] == line.substr(0, line.find("|"))){
+            verseText = " " + line.substr(line.find("|") + 1, line.size() - 1);
+            wordIndicies = find_substring_positions(make_lowercase_string(verseText), " " + word, {';', ':', '\'', '-', '.', ',', ' ', '\0'});
+            for(int i = 0; i < wordIndicies.size(); i++){
+                verseText = " " + line.substr(line.find("|") + 1, line.size() - 1) + " ";
+                verseText.insert(wordIndicies[i] + 1, "*");
+                verseText.insert(wordIndicies[i] + word.size() + 2, "*");
+                wordIndex = wordIndicies[i] + i;
+                if(wordIndex <= contextFactor){
+                    startContext = 0;
+                }else{
+                    startContext = wordIndex - contextFactor + verseText.substr(wordIndex - contextFactor, wordIndex).find(" ");
+                }
+                endContext = wordIndex + word.size() + contextFactor;
+                if(endContext >= verseText.size()){
+                    endContext = verseText.size() - 1;
+                }else{
+                    endContext = wordIndex + contextFactor + verseText.substr(wordIndex, wordIndex + contextFactor).rfind(" ") + 1;
+                }
+                ret.push_back(refs[refsIndex] + ":" + verseText.substr(startContext, endContext));
+                refsIndex++;
+            }
+        }
+    }
+    return ret;
 }
 
 std::deque<int> find_substring_positions(std::string str, std::string search, std::deque<char> add){
